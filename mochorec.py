@@ -51,6 +51,7 @@ class Niconico:
         return True
 
     def search(self, query):
+        # not requirements login
         # http://search.nicovideo.jp/docs/api/search.html
 
         # query='targets=title&fields=contentId,title,viewCounter&_sort=-startTime&_offset=0&_limit=3&_context=test'
@@ -66,9 +67,7 @@ class Niconico:
         }
 
         r = requests.get(URL['search'], params=params)
-        print(r.url)
-        print(r.text)
-        print(r.json())
+        return r.json()
 
     def status(self, channel_id):
         if not self.logined:
@@ -85,7 +84,7 @@ class LoginError(Exception):
         return "Login failed: " + self.msg
 
 n = Niconico()
-n.login()
-n.isLoggedIn()
-n.logout()
-# n.search("TrySailのTRYangle harmony")
+#n.login()
+#n.isLoggedIn()
+#n.logout()
+n.search("TrySailのTRYangle harmony")
