@@ -4,6 +4,7 @@
 import mochorec.niconico as nico
 import sys
 import os
+import logging
 
 
 def which(command):
@@ -22,23 +23,25 @@ def download(param, saveto, cmd="rtmpdump"):
     """download file using rtmpdump"""
     command = which(cmd)
     if not command:
-        sys.stderr.stdout("[+] Error: {} not found.".format(cmd))
+        logging.critical("[+] rtmpdump not found. Please install rtmpdump on your PATH")
         sys.exit(1)
 
     com = "{rtmp} -r {url} -y mp4:/{content} -C S:{ticket} -e -o {saveto}".format(
         rtmp=command, url=param.get('url'), content=param.get('content'),
         ticket=param.get('ticket'), saveto=saveto
     )
-    print(com)
+    logging.debug(com)
 
 
 def main():
+    logging.basicConfig(format='%(asctime)s:%(levelname)s:%(message)s',
+                        level=logging.DEBUG)
     n = nico.Niconico()
     n.login()
-    print("[+] Login success")
+    logging.info("[+] Login success")
 
     status = n.getplayerstatus("lv272216525")
-    print("[+] start download")
+    logging.info("[+] start download")
 
     download(status, "./toramamo137.flv")
 
