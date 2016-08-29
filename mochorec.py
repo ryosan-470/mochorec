@@ -3,6 +3,8 @@
 # mochorec command line tools
 import mochorec.niconico as nico
 import argparse
+import shlex
+import subprocess
 import sys
 import os
 import logging
@@ -23,6 +25,7 @@ def which(command):
 def download(param, saveto, cmd="rtmpdump"):
     """download file using rtmpdump"""
     command = which(cmd)
+    saveto = saveto[0]
     if not command:
         logging.critical("[+] rtmpdump not found. Please install rtmpdump on your PATH")
         sys.exit(1)
@@ -32,7 +35,12 @@ def download(param, saveto, cmd="rtmpdump"):
         ticket=param.get('ticket'), saveto=saveto
     )
     logging.debug(com)
-
+    logging.info("[+] Starting download")
+    try:
+        subprocess.check_call(shlex.split(com))
+        logging.info("[+] Complete download file: " + saveto)
+    except:
+        logging.warn("Failed to execute command: " + com)
 
 
 def parse():
@@ -60,9 +68,7 @@ def main():
     logging.info("[+] Login success")
 
     status = n.getplayerstatus(arg.lv)
-    logging.info("[+] start download")
-
-    download(status, n.save)
+    download(status, arg.save)
 
 
 if __name__ == "__main__":
