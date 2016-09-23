@@ -4,10 +4,13 @@
 import mochorec.niconico as nico
 import argparse
 import shlex
+import string
 import subprocess
 import sys
 import os
+import os.path
 import logging
+import random
 import re
 import tempfile
 
@@ -76,11 +79,13 @@ def convert(source_path, start_time, cutted_time, output_path):
         sys.exit(1)
 
     # 1. cut file
-    temp = tempfile.mkstemp(suffix=".flv")
+    tempdir = tempfile.mkdtemp()
+    random_base = ''.join([random.choice(string.ascii_letters + string.digits) for i in range(20)])
+    temp = os.path.join(tempdir, random_base + ".flv")
     # ffmpeg -ss <start_time> -i <source> -t <cutted_time> <output_path>
     com = "{ffmpeg} -ss {start_time} -i {source} -t {cutted_time} {temp_path}".format(
         ffmpeg=ffmpeg, start_time=start_time, source=source_path,
-        cutted_time=cutted_time, temp_path=temp[1])
+        cutted_time=cutted_time, temp_path=temp)
     logging.debug(com)
     try:
         subprocess.check_call(shlex.split(com))
@@ -91,7 +96,7 @@ def convert(source_path, start_time, cutted_time, output_path):
     # 2. flv to mp3
     # ffmpeg -i <temp> -acodec libmp3lame -ab 256k <output_path>
     com = "{ffmpeg} -i {temp_path} -acodec libmp3lame -ab 256k {output_path}".format(
-        ffmpeg=ffmpeg, temp_path=temp[1], output_path=output_path)
+        ffmpeg=ffmpeg, temp_path=temp, output_path=output_path)
     logging.debug(com)
     try:
         subprocess.check_call(shlex.split(com))
@@ -107,6 +112,31 @@ def login():
     return n
 
 
+def get_wrapper(arg):
+    url_check = re.match(r'http:\/\/live.nicovideo.jp/watch/(?P<lv>lv[0-9]+)', arg.get('url'))
+    if url_check is None:
+        sys.exit("Incorrect url patterns")
+    lv = url_check.groupdict().get('lv')
+    if lv:
+        n = login()
+        status = n.getplayerstatus(lv)
+    else:
+        sys.exit("Incorrect url patterns")
+        name = arg.get('save') if arg.get('save') else lv + ".flv"
+    if status:
+        get(status, name)
+    else:
+        sys.exit("Error")
+
+
+def convert_wrapper(arg):
+    output = arg.output
+    if output is None:
+        name = os.path.splitext(arg.input)[0]
+        output = "{}.mp3".format(name)
+    convert(arg.input, arg.start, arg.t, output)
+
+
 def parse():
     parser = argparse.ArgumentParser(prog="mochorec", description="mochorec")
     subparsers = parser.add_subparsers()
@@ -114,6 +144,7 @@ def parse():
                                 help='get http://live.nicovideo.jp/watch/lv********')
     get.add_argument("url", type=str)
     get.add_argument("-s", "--save", help="save path and file name", type=str)
+    get.set_defaults(func=get_wrapper)
 
     convert = subparsers.add_parser('convert', help='convert -i <input> -s <start time>(s) -t <cut time>(s) -o <save path>')
     convert.add_argument("-i", "--input", help="input filepath and filename",
@@ -123,6 +154,8 @@ def parse():
     convert.add_argument("-t", help="cutting time", nargs=1, default=1770)
     convert.add_argument("-o", "--output", help="output filepath and filename",
                          type=str)
+    convert.set_defaults(func=convert_wrapper)
+
     # DEBUG
     parser.add_argument("--debug", "-d", help="debug: show more messages for your debug",
                         action='store_true')
@@ -133,7 +166,8 @@ def parse():
 
 
 def main():
-    arg = vars(parse())
+    args = parse()
+    arg = vars(args)
     if arg.get('debug') is True:
         level = logging.NOTSET
     elif arg.get('quiet') is True:
@@ -142,29 +176,7 @@ def main():
         level = logging.INFO
     logging.basicConfig(format='%(asctime)s:%(levelname)s:%(message)s',
                         level=level)
-    # get
-    if arg.get('url'):
-        url_check = re.match(r'http:\/\/live.nicovideo.jp/watch/(?P<lv>lv[0-9]+)', arg.get('url'))
-        if url_check is None:
-            sys.exit("Incorrect url patterns")
-        lv = url_check.groupdict().get('lv')
-        if lv:
-            n = login()
-            status = n.getplayerstatus(lv)
-        else:
-            sys.exit("Incorrect url patterns")
-        name = arg.get('save') if arg.get('save') else lv + ".flv"
-        if status:
-            get(status, name)
-        else:
-            sys.exit("Error")
-    # convert
-    elif arg.get('input') and arg.get('start') and arg.get('t') and arg.get('output'):
-        i = arg.get('input')[0]
-        s = arg.get('start')[0]
-        t = arg.get('t')[0]
-        o = arg.get('output')[0]
-        convert(i, s, t, o)
+    args.func(args)
 
 
 if __name__ == "__main__":
