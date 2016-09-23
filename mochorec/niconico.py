@@ -1,4 +1,5 @@
 import json
+import sys
 import requests
 from xml.etree.ElementTree import *
 
@@ -84,8 +85,12 @@ class Niconico:
                     if c.tag == "quesheet":
                         for q in (c.findall('que')):
                             if "publish" in q.text:
-                                param.update({'content': q.text[q.text.find('/content'):]})
-                                break
+                                content = q.text[q.text.find('/content'):]
+                                p = param.get('content')
+                                if p:
+                                    param.get('content').append(content)
+                                else:
+                                    param.update({'content': [content]})
 
             if child.tag == "rtmp":
                 param.update({'url': child.find('url').text})
@@ -100,3 +105,9 @@ class LoginError(Exception):
 
     def __str__(self):
         return "Login failed: " + self.msg
+
+
+if __name__ == "__main__":
+    n = Niconico()
+    n.login()
+    print(n.getplayerstatus(sys.argv[1]))

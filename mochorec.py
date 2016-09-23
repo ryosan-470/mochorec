@@ -8,6 +8,8 @@ import subprocess
 import sys
 import os
 import logging
+import re
+import tempfile
 
 
 def which(command):
@@ -22,53 +24,116 @@ def which(command):
     return False
 
 
-def download(param, saveto, cmd="rtmpdump"):
-    """download file using rtmpdump"""
+def get(param, saveto, cmd="rtmpdump"):
+    """get file using rtmpdump"""
     command = which(cmd)
-    saveto = saveto[0]
     if not command:
         logging.critical("[+] rtmpdump not found. Please install rtmpdump on your PATH")
         sys.exit(1)
 
-    com = "{rtmp} -r {url} -y mp4:/{content} -C S:{ticket} -e -o {saveto}".format(
-        rtmp=command, url=param.get('url'), content=param.get('content'),
-        ticket=param.get('ticket'), saveto=saveto
-    )
-    logging.debug(com)
-    logging.info("[+] Starting download")
-    try:
-        subprocess.check_call(shlex.split(com))
-        logging.info("[+] Complete download file: " + saveto)
-    except:
-        logging.warn("Failed to execute command: " + com)
+    tempdir = tempfile.mkdtemp()
+    contents = param.get('content')
+    for i, content in enumerate(contents):
+        save_tmp = os.path.join(tempdir, str(i))
+        com = "{rtmp} -r {url} -y mp4:/{content} -C S:{ticket} -e -o {saveto}".format(
+            rtmp=command, url=param.get('url'), content=content,
+            ticket=param.get('ticket'), saveto=save_tmp)
+        logging.debug(com)
+        logging.info("[+] Starting get")
+        try:
+            subprocess.check_call(shlex.split(com))
+            logging.info("[+] Complete get file: " + saveto)
+        except:
+            logging.warn("Failed to execute command: " + com)
+
+    if len(contents) <= 1:
+        # rename and move
+        os.rename(os.path.join(tempdir, str(i), saveto))
+    else:
+        # combine files
+        ffmpeg = which("ffmpeg")
+
+        input_txt = os.path.join(tempdir, "input.txt")
+        with open(input_txt, "w") as f:
+            txt = "\n".join("file {}".format(os.path.join(tempdir, str(i))) for i in range(len(contents)))
+            f.write(txt)
+
+        # ffmpeg -f concat -safe 0 -i input.txt -c copy <output.flv>
+        com = '{ffmpeg} -f concat -safe 0 -i {input_txt} -c copy {saveto}'.format(
+            ffmpeg=ffmpeg, input_txt=input_txt, saveto=saveto)
+        logging.debug(com)
+        try:
+            subprocess.check_call(shlex.split(com))
+            logging.info("[+] Complete get file: " + saveto)
+        except:
+            logging.warn("Failed to execute command" + com)
+
+
+def login():
+    n = nico.Niconico()
+    n.login()
+    logging.info("[+] Login success")
+    return n
 
 
 def parse():
-    parser = argparse.ArgumentParser(description="mochorec")
-    # -lv lv*********
-    parser.add_argument("-lv", help="lv is niconico video movie id",
-                        required=True, nargs=1)
-    # save path
-    parser.add_argument("--save", "-s", help="file save path and name",
-                        required=True, nargs=1)
+    parser = argparse.ArgumentParser(prog="mochorec", description="mochorec")
+    subparsers = parser.add_subparsers()
+    get = subparsers.add_parser('get',
+                                help='get http://live.nicovideo.jp/watch/lv********')
+    get.add_argument("url", type=str)
+    get.add_argument("-s", "--save", help="save path and file name", type=str)
+
+    convert = subparsers.add_parser('convert', help='convert -i <input> -s <start time>(s) -t <cut time>(s) -o <save path>')
+    convert.add_argument("-i", "--input", help="input filepath and filename",
+                         required=True, nargs=1)
+    convert.add_argument("-s", "--start", help="start time",
+                         required=True, nargs=1)
+    convert.add_argument("-t", help="cutting time", required=True, nargs=1)
+    convert.add_argument("-o", "--output", help="output filepath and filename",
+                         required=True, nargs=1)
     # DEBUG
     parser.add_argument("--debug", "-d", help="debug: show more messages for your debug",
+                        action='store_true')
+    # Quiet
+    parser.add_argument("--quiet", "-q", help="quiet: not output for stdout",
                         action='store_true')
     return parser.parse_args()
 
 
 def main():
-    arg = parse()
+    arg = vars(parse())
+    if arg.get('debug') is True:
+        level = logging.NOTSET
+    elif arg.get('quiet') is True:
+        level = logging.CRITICAL
+    else:
+        level = logging.INFO
     logging.basicConfig(format='%(asctime)s:%(levelname)s:%(message)s',
-                        level=logging.INFO)
-    if arg.debug is True:
-        logging.level = logging.DEBUG
-    n = nico.Niconico()
-    n.login()
-    logging.info("[+] Login success")
-
-    status = n.getplayerstatus(arg.lv)
-    download(status, arg.save)
+                        level=level)
+    # get
+    if arg.get('url'):
+        url_check = re.match(r'http:\/\/live.nicovideo.jp/watch/(?P<lv>lv[0-9]+)', arg.get('url'))
+        if url_check is None:
+            sys.exit("Incorrect url patterns")
+        lv = url_check.groupdict().get('lv')
+        if lv:
+            n = login()
+            status = n.getplayerstatus(lv)
+        else:
+            sys.exit("Incorrect url patterns")
+        name = arg.get('save') if arg.get('save') else lv + ".flv"
+        if status:
+            get(status, name)
+        else:
+            sys.exit("Error")
+    # convert
+    elif arg.get('input') and arg.get('start') and arg.get('t') and arg.get('output'):
+        i = arg.get('input')[0]
+        s = arg.get('start')[0]
+        t = arg.get('t')[0]
+        o = arg.get('output')[0]
+        convert(i, s, t, o)
 
 
 if __name__ == "__main__":
