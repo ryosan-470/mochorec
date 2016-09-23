@@ -66,7 +66,38 @@ def get(param, saveto, cmd="rtmpdump"):
             subprocess.check_call(shlex.split(com))
             logging.info("[+] Complete get file: " + saveto)
         except:
-            logging.warn("Failed to execute command" + com)
+            logging.warn("Failed to execute command " + com)
+
+
+def convert(source_path, start_time, cutted_time, output_path):
+    ffmpeg = which("ffmpeg")
+    if not ffmpeg:
+        logging.critical("[+] rtmpdump not found. Please install rtmpdump on your PATH")
+        sys.exit(1)
+
+    # 1. cut file
+    temp = tempfile.mkstemp(suffix=".flv")
+    # ffmpeg -ss <start_time> -i <source> -t <cutted_time> <output_path>
+    com = "{ffmpeg} -ss {start_time} -i {source} -t {cutted_time} {temp_path}".format(
+        ffmpeg=ffmpeg, start_time=start_time, source=source_path,
+        cutted_time=cutted_time, temp_path=temp[1])
+    logging.debug(com)
+    try:
+        subprocess.check_call(shlex.split(com))
+        logging.info("[+] Cutted")
+    except:
+        logging.warn("Failed to execute command " + com)
+
+    # 2. flv to mp3
+    # ffmpeg -i <temp> -acodec libmp3lame -ab 256k <output_path>
+    com = "{ffmpeg} -i {temp_path} -acodec libmp3lame -ab 256k {output_path}".format(
+        ffmpeg=ffmpeg, temp_path=temp[1], output_path=output_path)
+    logging.debug(com)
+    try:
+        subprocess.check_call(shlex.split(com))
+        logging.info("[+] Converted: " + output_path)
+    except:
+        logging.warn("Failed to execute command " + com)
 
 
 def login():
@@ -86,12 +117,12 @@ def parse():
 
     convert = subparsers.add_parser('convert', help='convert -i <input> -s <start time>(s) -t <cut time>(s) -o <save path>')
     convert.add_argument("-i", "--input", help="input filepath and filename",
-                         required=True, nargs=1)
+                         required=True, type=str)
     convert.add_argument("-s", "--start", help="start time",
-                         required=True, nargs=1)
-    convert.add_argument("-t", help="cutting time", required=True, nargs=1)
+                         default=1800)
+    convert.add_argument("-t", help="cutting time", nargs=1, default=1770)
     convert.add_argument("-o", "--output", help="output filepath and filename",
-                         required=True, nargs=1)
+                         type=str)
     # DEBUG
     parser.add_argument("--debug", "-d", help="debug: show more messages for your debug",
                         action='store_true')
