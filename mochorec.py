@@ -51,7 +51,7 @@ def get(param, saveto, cmd="rtmpdump"):
 
     if len(contents) <= 1:
         # rename and move
-        os.rename(os.path.join(tempdir, str(i), saveto))
+        os.rename(save_tmp, saveto)
     else:
         # combine files
         ffmpeg = which("ffmpeg")
@@ -113,6 +113,7 @@ def login():
 
 
 def get_wrapper(arg):
+    arg = vars(arg)
     url_check = re.match(r'http:\/\/live.nicovideo.jp/watch/(?P<lv>lv[0-9]+)', arg.get('url'))
     if url_check is None:
         sys.exit("Incorrect url patterns")
@@ -122,7 +123,7 @@ def get_wrapper(arg):
         status = n.getplayerstatus(lv)
     else:
         sys.exit("Incorrect url patterns")
-        name = arg.get('save') if arg.get('save') else lv + ".flv"
+    name = arg.get('save') if arg.get('save') else lv + ".flv"
     if status:
         get(status, name)
     else:
