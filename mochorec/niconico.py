@@ -1,6 +1,8 @@
 import json
 import sys
+import re
 import requests
+import pprint
 from xml.etree.ElementTree import *
 
 
@@ -97,6 +99,9 @@ class Niconico:
                 param.update({'ticket': child.find('ticket').text})
         return param
 
+    def printplayerstatus(self, lv):
+        status = self.getplayerstatus(lv)
+        pprint.pprint(status)
 
 
 class LoginError(Exception):
@@ -110,4 +115,9 @@ class LoginError(Exception):
 if __name__ == "__main__":
     n = Niconico()
     n.login()
-    print(n.getplayerstatus(sys.argv[1]))
+    url_check = re.match(r'http:\/\/live.nicovideo.jp/watch/(?P<lv>lv[0-9]+)', sys.argv[1])
+    if url_check is None:
+        sys.exit("✗ Incorrect url patterns")
+    lv = url_check.groupdict().get('lv')
+    if lv:
+        n.printplayerstatus(lv)
