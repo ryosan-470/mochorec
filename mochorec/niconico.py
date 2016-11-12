@@ -11,7 +11,8 @@ URL = {
     "search": "http://api.search.nicovideo.jp/api/v2/live/contents/search",
     "status": "http://watch.live.nicovideo.jp/api/getplayerstatus",
     "check": "http://live.nicovideo.jp/api/getplayerstatus/nsen/vocaloid",
-    "logout": "https://secure.nicovideo.jp/secure/logout"
+    "reservation": "http://live.nicovideo.jp/api/watchingreservation",
+    "logout": "https://secure.nicovideo.jp/secure/logout",
 }
 
 
@@ -41,7 +42,7 @@ class Niconico:
     def logout(self):
         print(self.session)
         r = requests.post(URL["logout"], cookies={'user_session': self.session})
-        self.session = ""
+        del self.session
         self.logined = False
 
     def isLoggedIn(self):
@@ -102,6 +103,56 @@ class Niconico:
     def printplayerstatus(self, lv):
         status = self.getplayerstatus(lv)
         pprint.pprint(status)
+
+    def getReservationList(self):
+        r = requests.get(URL['reservation'], params={'mode': 'list'},
+                        cookies={'user_session': self.session})
+        root = fromstring(r.text)
+        reservation_id_list = []
+        if root.attrib.get('status') == 'fail':
+            return reservation_id_list
+        timeshift_reserved_list = [vid.text for vid in root[0]]
+        return timeshift_reserved_list
+
+    def getToken(self, vid):
+        r = requests.get(URL['reservation'], 
+                        params={'mode': 'watch_num', 'vid': vid},
+                        cookies={'user_session': self.session})
+        if "既に予約済みです" in r.text or "申込み期限切れです" in r.text: 
+            return False
+        else:
+            token = re.findall(r'ulck_[0-9]+', r.text)
+            if token:
+                return token[0]
+            raise Exception
+    
+    def reserve(self, vid):
+        token = getToken(vid)
+        if not token:
+            return False
+        r = requests.post(URL['reservation'], 
+                        params={'mode': 'regist', 'vid': vid, 'token': token},
+                        cookies={'user_session': self.session})
+        if r.status_code == 200:
+            return True
+        else:
+            return False
+        
+    def removeReservation(self, vid):
+        # get token
+        r = requests.get('http://live.nicovideo.jp/my_timeshift_list',
+                cookies={'user_session': self.session})
+        token = re.findall(r'ulck_[0-9]+', r.text[r.text.find(str(vid)) + len(str(vid)):])
+        if token:
+            token = token[0]
+        else:
+            return False
+
+        print(token)
+        r = requests.get('http://live.nicovideo.jp/my',
+                params={'delete': 'timeshift', 'vid': vid, 'confirm': token},
+                cookies={'user_session': self.session})
+        return True
 
 
 class LoginError(Exception):
