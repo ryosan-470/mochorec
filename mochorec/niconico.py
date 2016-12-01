@@ -1,8 +1,10 @@
 import json
+import os
 import sys
 import re
 import requests
 import pprint
+import logging
 from xml.etree.ElementTree import *
 
 
@@ -14,6 +16,7 @@ URL = {
     "logout": "https://secure.nicovideo.jp/secure/logout"
 }
 
+CONFIG_PATH = os.path.expanduser('~/.mochorec/config.json')
 
 class Niconico:
     def __init__(self):
@@ -21,13 +24,26 @@ class Niconico:
         self.session = ""
 
     def login(self):
-        with open('config.json') as f:
-            conf = json.load(f)
+        env_mail = os.environ.get('NICOVIDEO_MAIL')
+        env_password = os.environ.get('NICOVIDEO_PASSWORD')
+
+        if env_mail and env_password:
+            mail, password = env_mail, env_password
+        elif os.path.exists(CONFIG_PATH):
+            with open('config.json') as f:
+                conf = json.load(f)
+
+                mail = conf['nicovideo_mail']
+                password = conf['nicovide_pass']
+        else:
+            logging.critical("Please set the nicovideo password to use env or " + CONFIG_PATH)
+            sys.exit(1)
 
         auth = {
-            'mail': conf['nicovideo-mail'],
-            'password': conf['nicovideo-pass']
-            }
+            'mail': mail,
+            'password': password
+        }
+
         r = requests.post(URL["login"], data=auth, allow_redirects=False)
         session = r.cookies.get('user_session')
         # 再度取得したクッキーを用いてログインリクエストを送る

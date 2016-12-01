@@ -5,7 +5,7 @@ import tempfile
 import logging
 import re
 from mochorec.utils import which, exec_cmd
-import mochorec.niconico
+from mochorec.niconico import Niconico
 
 
 def main(args):
@@ -14,7 +14,7 @@ def main(args):
         sys.exit("✗ Incorrect URL patterns")
     lv = url_check.groupdict().get('lv')
     if lv:
-        nico = niconico.Niconico()
+        nico = Niconico()
         nico.login()
         status = nico.getplayerstatus(lv)
     else:
