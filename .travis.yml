@@ -1,0 +1,20 @@
+language: python
+matrix:
+  fast_finish: true
+  include:
+    - python: "2.7"
+    - python: "3.2"
+    - python: "3.3"
+    - python: "3.4"
+    - python: "3.5"
+    - python: "nightly"
+  allow_failures:
+    - python: "2.7"
+
+env:
+  global:
+    - secure: "cSEtWMUWfio943IxyLH3IJej5d9mZ0Gre64WH1pWaAWlDSQKLaI0oHKPElDMVH1ReuhYTEIxhkO0q+0npUMrsi4oIBNUlHAHpiVDaRTB+qPV4ZTBJDxRUpUn4O9mdL6Z7arcxbLuGON3ZJ4nJ2X65sodeQ/7HhpHL027DnZY5SYawL7jHImPUleqmFl0G0L4MPjad6IyQ9wC2IiTVGkYdYjtmGYFgGu22B2Yvhe7KeoqgrcjJpJLSC769Avb7Rvm9Aen13I8YryIw6af9ZfvJHcYAXsqldIbKpRajj7f3mhvDlmEXb6MN+/pxAR/iG4OQlsWPzrNlorLZJVVo0TGdjCFgRWXRnWPIxnkq4UpjkRdu9EFlb50AfaM+AW1gnLcHeFp2hyFTF0AteoSNxOWY0d5sfpBWIi5xGUtqo7aq9/Bajdxk9MrDzbi7fNxdNL1fWvwPYxIyhbk++5ad3QM0zsxIeQSzfKZ2/jBlfmbs6o0DFJqKgu8LbTrzRrq0PXaSJaoZaBsBOM14Mn9xr6x0zze8vSejESLs4mPvf0tFvD6lXlOZd0XWBy5/otrrEz1VWvd2bOQ37YgEKiV9cZk1Ylvf9rqs4bwsLGRtiq7xK70+xsiy9OCcVLqjNTfFWqB3LQEa7iby48O61e7qbvWhJHTSfupDf7Fv9lz8+7ATYc="
+    - secure: "c8tWlu2oWcxaxMy/v3rTqEzT1Mu+q3tkcENEY6vI2AvhjCyUZcJL/KQCwFejLmPOsmcGg4Jl1fUsF/X6KpSRfVlffFOm5C2/t3NiqPSHSvXrUkMo0WzkChE2NW/HZe7j5r+rAepQgx+hfC8TgkgF2AlQdXG2FFLacR1Yx3u92S2V2AN/RQfDUM5qQBiNyZXDLWGB9SbEX0+d6gROVBvVDKEsGbVIlwlYK2UwQXCwR6DbvxW+hbowiM43sIIpE0kRGg0mIzoHbABtLtoXlwwj4I8Swj4ozDmjSUJG81kMiJ+E//rWtZqnteCy5qhShblMYgm6Rlr4x/SWg0pBrfhEspftx4pwCqblUE/UaLm6SW8vohsko7SOzHejeXtGLSqp46WIQf/ctNofC0uO6rfRrjXkPjcrxqb2W4Yrqqrq9mTDHuF0t7otxxD+9am4kz8bM3qzM0F6q01ee+SEHBCbJS1s/3B7orQumExBCbbNIcTbsJOxw8Tg9eCeXq8IX916RommFeB1EiQAcRjiDa2pgcsmoSKMj50bG4HcBtZmAu5YoYCUrczlgIKzpql1XQznXOe9yWi7Pv9NTTd3POYKGT29pC3fZPfenUzdoMBX/v9sdeKal1UQ0toYf3dyncw9RR4svT1GSnYV2mLqKtJIIicUHpCeagG+3QgTkvysEYE="
+
+install: "pip install -r requirements.txt"
+script: python -m unittest discover -s "tests/"
