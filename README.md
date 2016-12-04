@@ -1,4 +1,7 @@
 # mochorec
+
+[![Build Status](https://travis-ci.com/jtwp470/mochorec.svg?token=6crSMqpz9hor3RSfEisa&)](https://travis-ci.com/jtwp470/mochorec)
+
 もちょ ヾ(@>▽<@)ノ (○・▽・○)  (*゜0゜) かわいいよね
 
 ニコニコ動画のタイムシフト予約自動化 + 動画をダウンロードし適切な形に変換するスクリプトです.
