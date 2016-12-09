@@ -30,11 +30,11 @@ class Niconico:
         if env_mail and env_password:
             mail, password = env_mail, env_password
         elif os.path.exists(CONFIG_PATH):
-            with open('config.json') as f:
+            with open(CONFIG_PATH) as f:
                 conf = json.load(f)
 
                 mail = conf['nicovideo_mail']
-                password = conf['nicovide_pass']
+                password = conf['nicovideo_password']
         else:
             logging.critical("Please set the nicovideo password to use env or " + CONFIG_PATH)
             sys.exit(1)
