@@ -6,6 +6,7 @@ import sys
 import logging
 import mochorec.get
 import mochorec.convert
+import mochorec.mp3tag
 
 
 def create_parser():
@@ -40,6 +41,17 @@ def create_parser():
         default=1800,
         type=int
     )
+    # mp3tag <mp3_file> --artist_name <artist> --title <title> --album_name <album> --cover <cover_file_path> --truck_number <number>
+    mp3tagcmd = subparsers.add_parser(
+        'mp3tag', help='Add tag for your mp3 file'
+    )
+    mp3tagcmd.set_defaults(func=mochorec.mp3tag.main)
+    mp3tagcmd.add_argument("mp3file", type=str)
+    mp3tagcmd.add_argument("--artist_name", nargs='?', type=str, default="")
+    mp3tagcmd.add_argument("-t", "--title", nargs='?', type=str, default="")
+    mp3tagcmd.add_argument("--album_name", nargs='?', type=str, default="")
+    mp3tagcmd.add_argument("--cover", nargs='?', type=str, default="")
+    mp3tagcmd.add_argument("--track_number", nargs='?', type=int, default=0)
     # DEBUG
     parser.add_argument(
         "--debug", "-d",
