@@ -8,7 +8,7 @@ import mochorec.get
 import mochorec.convert
 
 
-def main(argv):
+def create_parser():
     parser = argparse.ArgumentParser(
         prog="mochorec",
         description="The command line utility for the nicovideo live"
@@ -47,7 +47,12 @@ def main(argv):
         action='store_true'
     )
 
-    args = parser.parse_args(argv[1:])
+    return parser
+
+
+def main():
+    parser = create_parser()
+    args = parser.parse_args(sys.argv[1:])
     if "func" not in dir(args):
         sys.exit(parser.print_help())
 
