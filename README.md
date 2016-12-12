@@ -18,9 +18,10 @@ usage: mochorec [-h] [--debug] {get,convert} ...
 The command line utility for the nicovideo live
 
 positional arguments:
-  {get,convert}
+  {get,convert,mp3tag}
     get          Download a movie from the nicovideo live
     convert      Convert the input file to the audio file (mp3)
+    mp3tag              Add tag for your mp3 file
 
 optional arguments:
   -h, --help     show this help message and exit
@@ -29,9 +30,49 @@ optional arguments:
 
 ## Usage
 
+### Get file from the nicovideo live
+```bash
+$ mochorec get <url>
+```
 
-## 設定の仕方
-ニコニコ動画にログインするため, 最低でもニコニコ動画のアカウントは必要です.
+### Convert the movie to audio (mp3) file and cut
+The following command, cut the movie from the position of 30 mins (1800 secs) 15 minutes (900 secs).
+
+```bash
+$ mochorec convert <input_movie_file> -o <output_mp3_file> -s 1800 -c 900
+```
+
+### Add to tag your mp3 file
+
+```bash
+$ mochorec mp3tag <input_mp3_file> \
+    --artist_name "TrySail" \
+    --title "High Free Spirits" \
+    --album_name "High Free Spirits" \
+    --cover "<input_cover_file>" \
+    --track_number 1
+```
+
+## Configutation
+Please set the mail address and password as follows.
+
+### Save to file (Recommended)
+Save the configuration file at `~/.mochorec/config.json`:
+
+```json
+{
+	"nicovideo_mail": <your_mail_address>
+	"nicovideo_password": <your_nicovideo_password>
+}
+```
+
+### Environment Variables
+
+```bash
+export NICOVIDEO_MAIL=<your_mail_address>
+export NICOVIDEO_PASSWORD=<your_nicovideo_password>
+```
+
 
 ## License
 This program is licensed under the [GNU General Public License Version 2](./LICENSE.txt).
