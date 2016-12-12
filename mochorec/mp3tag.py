@@ -1,10 +1,14 @@
 # -*- coding: utf-8 -*-
 import os
+import sys
 from mutagen.id3 import ID3, TPE1, TIT2, TALB, TRCK, APIC
 from mutagen.mp3 import MP3
 
 
 def addtag(mp3file, artist_name, title, album_name, track_number, cover_path):
+    if not os.path.exists(mp3file):
+        sys.exit("✗ Your specified file is not found")
+
     m = MP3(mp3file, ID3=ID3)
     m["TPE1"] = TPE1(encoding=3, text=artist_name)
     m["TIT2"] = TIT2(encoding=3, text=title)
@@ -22,7 +26,6 @@ def addtag(mp3file, artist_name, title, album_name, track_number, cover_path):
                 )
             )
 
-    print(m)
     m.save()
     return True
 
